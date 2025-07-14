@@ -1,5 +1,7 @@
 # SharedTelemetry iRacing Scraper
 
+<img src="doc/logo.png" width="300" alt="Shared Telemetry logo" />
+
 **SharedTelemetry** is a project with the goal of creating an ecosystem of useful tools for managing teams and events on the major simracing simulators.
 
 This project is very young and started as a personal experiment, so initially there will be sporadic updates and a lot of confusion.
@@ -42,6 +44,23 @@ Future improvements are planned, including:
 - Enabling all the scrapers in production
 
 However, this is **not a high-priority project** at the moment, and development will progress **slowly and as needed**.
+
+## 🧰 Scrapers
+
+The scrapers are located in the `apps` directory. Each scraper is responsible for collecting specific data from iRacing and storing it in Firestore.
+
+Available scrapers include:
+
+- `cars`: collects information about cars and car classes available in iRacing.
+- `drivers`: collects information about iRacing's drivers. ⚠️ This scraper is not yet in production due to its high data volume.
+- `leagues`: signals to the queue which leagues and seasons to scrape.
+- `season`: collects information about each season of each league.
+- `sessions`: collects information about single sessions as requested by the `season` scraper.
+
+## 🛠️ Next steps
+
+- Linting, formatting and testing the code.
+- Pipelines and git hooks to ensure code quality.
 
 ## 🤝 Contributing
 
