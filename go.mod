@@ -3,9 +3,11 @@ module riccardotornesello.it/sharetelemetry/iracing
 go 1.25.4
 
 require (
+	cloud.google.com/go/pubsub/v2 v2.3.0
 	firebase.google.com/go v3.13.0+incompatible
+	github.com/cloudevents/sdk-go/v2 v2.16.2
 	github.com/joho/godotenv v1.5.1
-	github.com/riccardotornesello/irapi-go v0.3.1-0.20251203161111-91212a9e974d
+	github.com/riccardotornesello/irapi-go v0.4.1
 )
 
 require (
@@ -36,9 +38,13 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.7 // indirect
 	github.com/googleapis/gax-go/v2 v2.15.0 // indirect
+	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/jszwec/csvutil v1.10.0 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.6.0 // indirect
+	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/detectors/gcp v1.38.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.63.0 // indirect
@@ -50,7 +56,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.38.0 // indirect
 	golang.org/x/crypto v0.45.0 // indirect
 	golang.org/x/net v0.47.0 // indirect
-	golang.org/x/oauth2 v0.33.0 // indirect
+	golang.org/x/oauth2 v0.34.0 // indirect
 	golang.org/x/sync v0.18.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/text v0.31.0 // indirect

@@ -2,15 +2,17 @@ import os
 from google.cloud import pubsub_v1
 from google.api_core.exceptions import AlreadyExists, NotFound
 
-PROJECT_ID = "demo-sharetelemetry"
+from conf import PROJECT_ID
 
-# Define here the structure: { "topic_name": ["subscription_name1", "subscription_name2"], ... }
-SCHEMA = {
-    "league-sessions": ["sub-league-sessions"],
-}
 
 # Setup the environment variables
 os.environ["PUBSUB_EMULATOR_HOST"] = "localhost:8085"
+
+# Define here the structure: { "topic_name": ["subscription_name1", "subscription_name2"], ... }
+SCHEMA = {
+    "api-req": ["sub-api-req"],
+    "api-res": ["sub-api-res"],
+}
 
 
 def create_pubsub_resources():
