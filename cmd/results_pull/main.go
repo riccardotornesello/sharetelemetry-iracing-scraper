@@ -56,12 +56,22 @@ func main() {
 			return
 		}
 
+		// Convert to a map for Firestore
+		// NOTE: this is needed to keep the key names as in the original response
+		var resultsMapData map[string]interface{}
+		err = json.Unmarshal([]byte(msgData.Body), &resultsMapData)
+		if err != nil {
+			log.Printf("Failed to unmarshal API response body to map: %v", err)
+			msg.Nack()
+			return
+		}
+
 		subsessionID := results.SubsessionID
 		log.Printf("Processing results for subsession ID: %d", subsessionID)
 
 		// Save to firestore
 		err = firestore.UpsertData("sessions", fmt.Sprintf("%d", subsessionID), map[string]interface{}{
-			"spec": results,
+			"spec": resultsMapData,
 		})
 		if err != nil {
 			log.Printf("Failed to upsert data to Firestore: %v", err)
