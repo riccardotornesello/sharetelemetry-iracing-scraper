@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 
 	"github.com/riccardotornesello/irapi-go"
@@ -40,6 +41,11 @@ func CallApi(endpoint string, params map[string]interface{}) (*http.Response, er
 		return nil, fmt.Errorf("function not initialized")
 	}
 
-	// TODO: fix parameters type
-	return iracingClient.Client.Get(endpoint, params)
+	// Generate the query string
+	paramsValues := url.Values{}
+	for k, v := range params {
+		paramsValues.Add(k, fmt.Sprintf("%v", v))
+	}
+
+	return iracingClient.Client.Get(endpoint, paramsValues.Encode())
 }

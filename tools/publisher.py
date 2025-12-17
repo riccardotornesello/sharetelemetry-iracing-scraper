@@ -13,6 +13,7 @@ os.environ["PUBSUB_EMULATOR_HOST"] = "localhost:8085"
 DATA = {
     "api-req": [
         {"endpoint": "/data/member/info"},
+        {"endpoint": "/data/member/get", "params": {"cust_ids": 911231}},
     ]
 }
 

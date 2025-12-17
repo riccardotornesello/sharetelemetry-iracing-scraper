@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"log"
 	"os"
 
@@ -15,11 +16,18 @@ import (
 const (
 	projectID             = "demo-sharetelemetry"
 	requestSubscriptionID = "sub-api-req"
+	responseTopicID       = "api-res"
 )
 
 type ApiRequest struct {
 	Endpoint string                 `json:"endpoint"`
 	Params   map[string]interface{} `json:"params"`
+}
+
+type ApiResponse struct {
+	Endpoint string                 `json:"endpoint"`
+	Params   map[string]interface{} `json:"params"`
+	Body     string                 `json:"body"`
 }
 
 func main() {
@@ -38,8 +46,9 @@ func main() {
 	}
 	defer pubSubClient.Close()
 
-	// Subscribe to the subscription to receive messages
+	// Create subscriber and publisher
 	sub := pubSubClient.Subscriber(requestSubscriptionID)
+	pub := pubSubClient.Publisher(responseTopicID)
 
 	// Parse messages
 	log.Println("Listening for messages...")
@@ -54,6 +63,7 @@ func main() {
 
 		res, err := iracing.CallApi(msgData.Endpoint, msgData.Params)
 		if err != nil {
+			// TODO: handle error response properly
 			log.Printf("API call failed: %v", err)
 			msg.Nack()
 			return
@@ -62,7 +72,39 @@ func main() {
 
 		log.Printf("API call to '%s' succeeded with status: %s", msgData.Endpoint, res.Status)
 
-		// TODO: publish the response to another topic
+		// Publish the response body to the response topic
+		bodyBytes, err := io.ReadAll(res.Body)
+		if err != nil {
+			log.Printf("Failed to read response body: %v", err)
+			msg.Nack()
+			return
+		}
+
+		apiResponse := ApiResponse{
+			Endpoint: msgData.Endpoint,
+			Params:   msgData.Params,
+			Body:     string(bodyBytes),
+		}
+
+		data, err := json.Marshal(apiResponse)
+		if err != nil {
+			log.Printf("Failed to marshal response data: %v", err)
+			msg.Nack()
+			return
+		}
+
+		result := pub.Publish(ctx, &pubsub.Message{
+			Data: data,
+			Attributes: map[string]string{
+				"endpoint": msgData.Endpoint,
+			},
+		})
+		_, err = result.Get(ctx)
+		if err != nil {
+			log.Printf("Failed to publish response message: %v", err)
+			msg.Nack()
+			return
+		}
 
 		// Acknowledge the message
 		msg.Ack()

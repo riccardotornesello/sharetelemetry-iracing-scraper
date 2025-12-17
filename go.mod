@@ -7,7 +7,7 @@ require (
 	firebase.google.com/go v3.13.0+incompatible
 	github.com/cloudevents/sdk-go/v2 v2.16.2
 	github.com/joho/godotenv v1.5.1
-	github.com/riccardotornesello/irapi-go v0.4.1
+	github.com/riccardotornesello/irapi-go v0.4.2
 )
 
 require (
