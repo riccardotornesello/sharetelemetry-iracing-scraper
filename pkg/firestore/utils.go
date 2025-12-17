@@ -46,3 +46,30 @@ func UpsertData(collectionName, docID string, data interface{}) error {
 
 	return nil
 }
+
+func Update(collectionName, docID string, path string, value interface{}) error {
+	if !initialized {
+		return fmt.Errorf("firestore client not initialized")
+	}
+
+	docRef := firestoreClient.Collection(collectionName).Doc(docID)
+
+	_, err := docRef.Update(ctx, []firestore.Update{{Path: path, Value: value}})
+	if err != nil {
+		return fmt.Errorf("error during document update: %v", err)
+	}
+
+	return nil
+}
+
+func Get[T any](collectionName, docID string) (*T, error) {
+	data, err := firestoreClient.Collection(collectionName).Doc(docID).Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var el T
+	data.DataTo(&el)
+
+	return &el, nil
+}

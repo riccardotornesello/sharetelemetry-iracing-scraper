@@ -27,20 +27,14 @@ func ProcessSessionLaps(msgData *bus.ApiResponse) error {
 	simsessionNumber := msgData.Params["simsession_number"]
 	custID := msgData.Params["cust_id"]
 
-	err = firestore.UpsertData("sessions", subsessionID, map[string]interface{}{
-		"spec": map[string]interface{}{
-			"laps": map[string]interface{}{
-				simsessionNumber: map[string]interface{}{
-					custID: lapMapData,
-				},
-			},
-		},
-	})
+	fieldKey := fmt.Sprintf("spec.laps.%s.%s", simsessionNumber, custID)
+
+	err = firestore.Update("sessions", subsessionID, fieldKey, lapMapData)
 	if err != nil {
-		return fmt.Errorf("failed to upsert session results to Firestore: %w", err)
+		return fmt.Errorf("failed to update session results (%s/%s) in Firestore: %w", subsessionID, fieldKey, err)
 	}
 
-	log.Printf("Successfully saved results for subsession ID: %s", subsessionID)
+	log.Printf("Successfully saved laps for %s/%s", subsessionID, fieldKey)
 
 	return nil
 }

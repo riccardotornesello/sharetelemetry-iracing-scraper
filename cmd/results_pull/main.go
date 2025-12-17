@@ -63,6 +63,14 @@ func main() {
 				return
 			}
 
+		case "/data/league/season_sessions":
+			err = processing.ProcessLeagueSeasonSessions(&msgData, ctx, pub)
+			if err != nil {
+				log.Printf("Failed to process league season sessions: %v", err)
+				msg.Nack()
+				return
+			}
+
 		default:
 			log.Printf("Skipping unknown endpoint: %s", msgData.Endpoint)
 			msg.Ack()
