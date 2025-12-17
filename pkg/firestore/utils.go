@@ -73,3 +73,16 @@ func Get[T any](collectionName, docID string) (*T, error) {
 
 	return &el, nil
 }
+
+func Set(collectionName, docID string, data interface{}) error {
+	if !initialized {
+		return fmt.Errorf("firestore client not initialized")
+	}
+
+	_, err := firestoreClient.Collection(collectionName).Doc(docID).Set(ctx, data)
+	if err != nil {
+		return fmt.Errorf("error during document set: %v", err)
+	}
+
+	return nil
+}

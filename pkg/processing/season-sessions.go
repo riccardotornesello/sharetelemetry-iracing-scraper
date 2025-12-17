@@ -39,8 +39,18 @@ func ProcessLeagueSeasonSessions(msgData *bus.ApiResponse, ctx context.Context, 
 
 	// Get the league
 	league, err := firestore.Get[League]("leagues", leagueID)
-	if err != nil && status.Code(err) != codes.NotFound {
-		return fmt.Errorf("failed to get league from Firestore: %w", err)
+	if err != nil {
+		if status.Code(err) != codes.NotFound {
+			return fmt.Errorf("failed to get league from Firestore: %w", err)
+		} else {
+			league = &League{}
+		}
+	}
+	if league.Seasons == nil {
+		league.Seasons = make(map[string]LeagueSeason)
+	}
+	if _, ok := league.Seasons[seasonID]; !ok {
+		league.Seasons[seasonID] = LeagueSeason{}
 	}
 
 	// Find the missing subsessions
@@ -50,12 +60,8 @@ func ProcessLeagueSeasonSessions(msgData *bus.ApiResponse, ctx context.Context, 
 	}
 
 	parsedSubsessions := make(map[int64]bool)
-	if league != nil && league.Seasons != nil {
-		if season, ok := league.Seasons[seasonID]; ok {
-			for _, parsedSubsessionID := range season.SessionsParsed {
-				parsedSubsessions[parsedSubsessionID] = true
-			}
-		}
+	for _, parsedSubsessionID := range league.Seasons[seasonID].SessionsParsed {
+		parsedSubsessions[parsedSubsessionID] = true
 	}
 
 	var missingSubsessionIds []int64
@@ -102,7 +108,15 @@ func ProcessLeagueSeasonSessions(msgData *bus.ApiResponse, ctx context.Context, 
 		}
 	}
 
-	// TODO: update the league in Firestore to mark these sessions as parsed
+	// Update the league season with the newly parsed sessions
+	season := league.Seasons[seasonID]
+	season.SessionsParsed = append(season.SessionsParsed, missingSubsessionIds...)
+	league.Seasons[seasonID] = season
+
+	err = firestore.Set("leagues", leagueID, league)
+	if err != nil {
+		return fmt.Errorf("failed to update league in Firestore: %w", err)
+	}
 
 	log.Printf("Published %d sessions requests for league ID: %s", len(pubsubRequests), leagueID)
 	return nil
