@@ -12,8 +12,7 @@ os.environ["PUBSUB_EMULATOR_HOST"] = "localhost:8085"
 # Define the payload to be sent
 DATA = {
     "api-req": [
-        {"endpoint": "/data/member/info"},
-        {"endpoint": "/data/member/get", "params": {"cust_ids": 911231}},
+        {"endpoint": "/data/results/get", "params": {"subsession_id": 81891896, "include_licenses": False}},
     ]
 }
 

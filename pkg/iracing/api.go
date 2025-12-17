@@ -11,7 +11,8 @@ import (
 )
 
 var (
-	initialized   bool
+	initialized bool
+
 	iracingClient *irapi.IRacingApiClient
 )
 

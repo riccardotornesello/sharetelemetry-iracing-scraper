@@ -10,34 +10,19 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 
 	"cloud.google.com/go/pubsub/v2"
+	"riccardotornesello.it/sharetelemetry/iracing/pkg/bus"
 	"riccardotornesello.it/sharetelemetry/iracing/pkg/iracing"
 )
 
 const (
-	projectID             = "demo-sharetelemetry"
 	requestSubscriptionID = "sub-api-req"
 	responseTopicID       = "api-res"
 )
 
-type ApiRequest struct {
-	Endpoint string                 `json:"endpoint"`
-	Params   map[string]interface{} `json:"params"`
-}
-
-type ApiResponse struct {
-	Endpoint string                 `json:"endpoint"`
-	Params   map[string]interface{} `json:"params"`
-	Body     string                 `json:"body"`
-}
-
 func main() {
 	ctx := context.Background()
 
-	// Connect to the Pub/Sub emulator
-	err := os.Setenv("PUBSUB_EMULATOR_HOST", "127.0.0.1:8085")
-	if err != nil {
-		log.Fatalf("Failed to set PUBSUB_EMULATOR_HOST: %v", err)
-	}
+	projectID := os.Getenv("PROJECT_ID")
 
 	// Create a Pub/Sub client
 	pubSubClient, err := pubsub.NewClient(ctx, projectID)
@@ -53,7 +38,7 @@ func main() {
 	// Parse messages
 	log.Println("Listening for messages...")
 	err = sub.Receive(ctx, func(_ context.Context, msg *pubsub.Message) {
-		var msgData ApiRequest
+		var msgData bus.ApiRequest
 		err := json.Unmarshal(msg.Data, &msgData)
 		if err != nil {
 			log.Printf("Failed to unmarshal message data: %v", err)
@@ -80,7 +65,7 @@ func main() {
 			return
 		}
 
-		apiResponse := ApiResponse{
+		apiResponse := bus.ApiResponse{
 			Endpoint: msgData.Endpoint,
 			Params:   msgData.Params,
 			Body:     string(bodyBytes),
