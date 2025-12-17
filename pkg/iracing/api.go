@@ -36,7 +36,7 @@ func init() {
 	initialized = true
 }
 
-func CallApi(endpoint string, params map[string]interface{}) (*http.Response, error) {
+func CallApi(endpoint string, params map[string]string) (*http.Response, error) {
 	// If not initialized, return error
 	if !initialized {
 		return nil, fmt.Errorf("function not initialized")
