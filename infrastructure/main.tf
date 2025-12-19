@@ -167,14 +167,15 @@ resource "google_cloudfunctions2_function" "api" {
   }
 
   service_config {
-    max_instance_count             = 1
-    min_instance_count             = 0
-    available_memory               = "256M"
-    timeout_seconds                = 540
-    environment_variables          = local.environment_variables
-    ingress_settings               = "ALLOW_INTERNAL_ONLY"
-    all_traffic_on_latest_revision = true
-    service_account_email          = google_service_account.runner.email
+    max_instance_count               = 1
+    min_instance_count               = 0
+    max_instance_request_concurrency = 20
+    available_memory                 = "256M"
+    timeout_seconds                  = 540
+    environment_variables            = local.environment_variables
+    ingress_settings                 = "ALLOW_INTERNAL_ONLY"
+    all_traffic_on_latest_revision   = true
+    service_account_email            = google_service_account.runner.email
   }
 
   event_trigger {
@@ -231,14 +232,15 @@ resource "google_cloudfunctions2_function" "responses" {
   }
 
   service_config {
-    max_instance_count             = 1
-    min_instance_count             = 0
-    available_memory               = "256M"
-    timeout_seconds                = 540
-    environment_variables          = local.environment_variables
-    ingress_settings               = "ALLOW_INTERNAL_ONLY"
-    all_traffic_on_latest_revision = true
-    service_account_email          = google_service_account.runner.email
+    max_instance_count               = 1
+    min_instance_count               = 0
+    max_instance_request_concurrency = 20
+    available_memory                 = "256M"
+    timeout_seconds                  = 540
+    environment_variables            = local.environment_variables
+    ingress_settings                 = "ALLOW_INTERNAL_ONLY"
+    all_traffic_on_latest_revision   = true
+    service_account_email            = google_service_account.runner.email
   }
 
   event_trigger {
