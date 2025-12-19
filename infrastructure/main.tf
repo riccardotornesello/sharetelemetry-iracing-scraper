@@ -171,6 +171,7 @@ resource "google_cloudfunctions2_function" "api" {
     min_instance_count               = 0
     max_instance_request_concurrency = 20
     available_memory                 = "256M"
+    available_cpu                    = "1"
     timeout_seconds                  = 540
     environment_variables            = local.environment_variables
     ingress_settings                 = "ALLOW_INTERNAL_ONLY"
@@ -236,6 +237,7 @@ resource "google_cloudfunctions2_function" "responses" {
     min_instance_count               = 0
     max_instance_request_concurrency = 20
     available_memory                 = "256M"
+    available_cpu                    = "1"
     timeout_seconds                  = 540
     environment_variables            = local.environment_variables
     ingress_settings                 = "ALLOW_INTERNAL_ONLY"
