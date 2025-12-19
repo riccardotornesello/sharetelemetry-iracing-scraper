@@ -240,7 +240,7 @@ resource "google_cloudfunctions2_function" "responses" {
   event_trigger {
     trigger_region        = var.region
     event_type            = "google.cloud.pubsub.topic.v1.messagePublished"
-    pubsub_topic          = google_pubsub_topic.iracing_api_topic.id
+    pubsub_topic          = google_pubsub_topic.iracing_response_topic.id
     retry_policy          = "RETRY_POLICY_RETRY"
     service_account_email = google_service_account.invoker.email
   }
