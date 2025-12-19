@@ -31,7 +31,6 @@ func main() {
 	defer pubSubClient.Close()
 
 	// Create subscriber and publisher
-	// TODO: filter messages
 	sub := pubSubClient.Subscriber(responseSubscriptionID)
 	pub := pubSubClient.Publisher(requestTopicID)
 

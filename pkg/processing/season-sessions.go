@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"time"
 
 	"cloud.google.com/go/pubsub/v2"
 	"github.com/riccardotornesello/irapi-go/pkg/api/league/season_sessions"
@@ -15,11 +16,17 @@ import (
 )
 
 type League struct {
-	Seasons map[string]LeagueSeason
+	Seasons map[string]LeagueSeason `firestore:"seasons"`
 }
 
 type LeagueSeason struct {
-	SessionsParsed []int64
+	SessionsParsed map[string]LeagueSeasonSession `firestore:"sessions_parsed"`
+}
+
+type LeagueSeasonSession struct {
+	EntryCount int64     `firestore:"entry_count"`
+	LaunchAt   time.Time `firestore:"launch_at"`
+	TrackID    int64     `firestore:"track_id"`
 }
 
 func ProcessLeagueSeasonSessions(msgData *bus.ApiResponse, ctx context.Context, pub *pubsub.Publisher) error {
@@ -31,13 +38,13 @@ func ProcessLeagueSeasonSessions(msgData *bus.ApiResponse, ctx context.Context, 
 	seasonID := msgData.Params["season_id"]
 
 	// Convert to the IRacing's API response
-	var seasonSessions season_sessions.LeagueSeasonSessionsResponse
-	err = json.Unmarshal(body, &seasonSessions)
+	var iracingSeasonSessions season_sessions.LeagueSeasonSessionsResponse
+	err = json.Unmarshal(body, &iracingSeasonSessions)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal API response body: %w", err)
 	}
 
-	// Get the league
+	// Get the league in Firestore
 	league, err := firestore.Get[League]("leagues", leagueID)
 	if err != nil {
 		if status.Code(err) != codes.NotFound {
@@ -54,20 +61,15 @@ func ProcessLeagueSeasonSessions(msgData *bus.ApiResponse, ctx context.Context, 
 	}
 
 	// Find the missing subsessions
-	subsessionIds := make([]int64, len(seasonSessions.Sessions))
-	for i, session := range seasonSessions.Sessions {
-		subsessionIds[i] = session.SubsessionID
+	alreadyParsedSubsessions := make(map[string]interface{})
+	for parsedSubsessionID, _ := range league.Seasons[seasonID].SessionsParsed {
+		alreadyParsedSubsessions[parsedSubsessionID] = nil
 	}
 
-	parsedSubsessions := make(map[int64]bool)
-	for _, parsedSubsessionID := range league.Seasons[seasonID].SessionsParsed {
-		parsedSubsessions[parsedSubsessionID] = true
-	}
-
-	var missingSubsessionIds []int64
-	for _, subsessionID := range subsessionIds {
-		if _, ok := parsedSubsessions[subsessionID]; !ok {
-			missingSubsessionIds = append(missingSubsessionIds, subsessionID)
+	var missingSubsessionIds []string
+	for _, iracingSession := range iracingSeasonSessions.Sessions {
+		if _, ok := alreadyParsedSubsessions[fmt.Sprintf("%d", iracingSession.SubsessionID)]; !ok {
+			missingSubsessionIds = append(missingSubsessionIds, fmt.Sprintf("%d", iracingSession.SubsessionID))
 		}
 	}
 
@@ -79,7 +81,7 @@ func ProcessLeagueSeasonSessions(msgData *bus.ApiResponse, ctx context.Context, 
 		apiRequest := bus.ApiRequest{
 			Endpoint: "/data/results/get",
 			Params: map[string]string{
-				"subsession_id":    fmt.Sprintf("%d", subsessionID),
+				"subsession_id":    subsessionID,
 				"include_licenses": "false",
 			},
 		}
@@ -109,8 +111,18 @@ func ProcessLeagueSeasonSessions(msgData *bus.ApiResponse, ctx context.Context, 
 	}
 
 	// Update the league season with the newly parsed sessions
+	// Convert the sessions to a map for easier storage
+	newSessionsParsed := make(map[string]LeagueSeasonSession)
+	for _, iracingSession := range iracingSeasonSessions.Sessions {
+		newSessionsParsed[fmt.Sprintf("%d", iracingSession.SubsessionID)] = LeagueSeasonSession{
+			EntryCount: iracingSession.EntryCount,
+			LaunchAt:   iracingSession.LaunchAt.Time,
+			TrackID:    iracingSession.Track.TrackID,
+		}
+	}
+
 	season := league.Seasons[seasonID]
-	season.SessionsParsed = append(season.SessionsParsed, missingSubsessionIds...)
+	season.SessionsParsed = newSessionsParsed
 	league.Seasons[seasonID] = season
 
 	err = firestore.Set("leagues", leagueID, league)
