@@ -12,7 +12,7 @@ import (
 	"riccardotornesello.it/sharetelemetry/iracing/pkg/firestore"
 )
 
-func ProcessSessionResults(msgData *bus.ApiResponse, ctx context.Context, pub *pubsub.Publisher) error {
+func ProcessSessionResults(fc *firestore.FirestoreClient, msgData *bus.ApiResponse, ctx context.Context, pub *pubsub.Publisher) error {
 	var err error
 
 	body := []byte(msgData.Body)
@@ -36,7 +36,7 @@ func ProcessSessionResults(msgData *bus.ApiResponse, ctx context.Context, pub *p
 	log.Printf("Processing results for subsession ID: %d", subsessionID)
 
 	// Save to firestore
-	err = firestore.UpsertData("sessions", fmt.Sprintf("%d", subsessionID), map[string]interface{}{
+	err = firestore.UpsertData(fc, "sessions", fmt.Sprintf("%d", subsessionID), map[string]interface{}{
 		"spec": map[string]interface{}{
 			"session": sessionMapData,
 		},

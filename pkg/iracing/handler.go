@@ -6,15 +6,23 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/url"
 
 	"cloud.google.com/go/pubsub/v2"
+	"github.com/riccardotornesello/irapi-go"
 	"riccardotornesello.it/sharetelemetry/iracing/pkg/bus"
 )
 
-func HandleApiRequest(ctx context.Context, pub *pubsub.Publisher, msgData *bus.ApiRequest) error {
+func HandleApiRequest(ctx context.Context, iracingClient *irapi.IRacingApiClient, pub *pubsub.Publisher, msgData *bus.ApiRequest) error {
 	var err error
 
-	res, err := CallApi(msgData.Endpoint, msgData.Params)
+	// Generate the query parameters
+	paramsValues := url.Values{}
+	for k, v := range msgData.Params {
+		paramsValues.Add(k, fmt.Sprintf("%v", v))
+	}
+
+	res, err := iracingClient.Client.Get(msgData.Endpoint, paramsValues.Encode())
 	if err != nil {
 		// TODO: handle error response properly
 		return fmt.Errorf("API call failed: %v", err)

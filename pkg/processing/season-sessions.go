@@ -29,7 +29,7 @@ type LeagueSeasonSession struct {
 	TrackID    int64     `firestore:"track_id"`
 }
 
-func ProcessLeagueSeasonSessions(msgData *bus.ApiResponse, ctx context.Context, pub *pubsub.Publisher) error {
+func ProcessLeagueSeasonSessions(fc *firestore.FirestoreClient, msgData *bus.ApiResponse, ctx context.Context, pub *pubsub.Publisher) error {
 	var err error
 
 	body := []byte(msgData.Body)
@@ -45,7 +45,7 @@ func ProcessLeagueSeasonSessions(msgData *bus.ApiResponse, ctx context.Context, 
 	}
 
 	// Get the league in Firestore
-	league, err := firestore.Get[League]("leagues", leagueID)
+	league, err := firestore.Get[League](fc, "leagues", leagueID)
 	if err != nil {
 		if status.Code(err) != codes.NotFound {
 			return fmt.Errorf("failed to get league from Firestore: %w", err)
@@ -125,7 +125,7 @@ func ProcessLeagueSeasonSessions(msgData *bus.ApiResponse, ctx context.Context, 
 	season.SessionsParsed = newSessionsParsed
 	league.Seasons[seasonID] = season
 
-	err = firestore.Set("leagues", leagueID, league)
+	err = firestore.Set(fc, "leagues", leagueID, league)
 	if err != nil {
 		return fmt.Errorf("failed to update league in Firestore: %w", err)
 	}

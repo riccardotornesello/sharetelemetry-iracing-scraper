@@ -10,6 +10,7 @@ import (
 
 	"cloud.google.com/go/pubsub/v2"
 	"riccardotornesello.it/sharetelemetry/iracing/pkg/bus"
+	"riccardotornesello.it/sharetelemetry/iracing/pkg/firestore"
 	"riccardotornesello.it/sharetelemetry/iracing/pkg/processing"
 )
 
@@ -34,6 +35,12 @@ func main() {
 	sub := pubSubClient.Subscriber(responseSubscriptionID)
 	pub := pubSubClient.Publisher(requestTopicID)
 
+	// Connect to Firestore
+	fc, err := firestore.Init(ctx, projectID)
+	if err != nil {
+		log.Fatalf("Failed to initialize Firestore client: %v", err)
+	}
+
 	// Parse messages
 	log.Println("Listening for messages...")
 	err = sub.Receive(ctx, func(_ context.Context, msg *pubsub.Message) {
@@ -45,7 +52,7 @@ func main() {
 			return
 		}
 
-		err = processing.MultiplexProcessing(ctx, pub, &msgData)
+		err = processing.MultiplexProcessing(fc, ctx, pub, &msgData)
 		if err != nil {
 			log.Printf("Failed to process message: %v", err)
 			msg.Nack()

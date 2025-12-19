@@ -7,6 +7,7 @@ import (
 	"os"
 
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/riccardotornesello/irapi-go"
 
 	"cloud.google.com/go/pubsub/v2"
 	"riccardotornesello.it/sharetelemetry/iracing/pkg/bus"
@@ -34,6 +35,17 @@ func main() {
 	sub := pubSubClient.Subscriber(requestSubscriptionID)
 	pub := pubSubClient.Publisher(responseTopicID)
 
+	// Connect to iRacing
+	iracingClient, err := irapi.NewIRacingPasswordLimitedApiClient(
+		os.Getenv("IRACING_CLIENT_ID"),
+		os.Getenv("IRACING_CLIENT_SECRET"),
+		os.Getenv("IRACING_USERNAME"),
+		os.Getenv("IRACING_PASSWORD"),
+	)
+	if err != nil {
+		log.Fatalf("Error initializing iRacing client: %v", err)
+	}
+
 	// Parse messages
 	log.Println("Listening for messages...")
 	err = sub.Receive(ctx, func(_ context.Context, msg *pubsub.Message) {
@@ -45,7 +57,7 @@ func main() {
 			return
 		}
 
-		err = iracing.HandleApiRequest(ctx, pub, &msgData)
+		err = iracing.HandleApiRequest(ctx, iracingClient, pub, &msgData)
 		if err != nil {
 			log.Printf("Failed to handle API request: %v", err)
 			msg.Nack()

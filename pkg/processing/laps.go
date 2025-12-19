@@ -9,7 +9,7 @@ import (
 	"riccardotornesello.it/sharetelemetry/iracing/pkg/firestore"
 )
 
-func ProcessSessionLaps(msgData *bus.ApiResponse) error {
+func ProcessSessionLaps(fc *firestore.FirestoreClient, msgData *bus.ApiResponse) error {
 	var err error
 
 	body := []byte(msgData.Body)
@@ -29,7 +29,7 @@ func ProcessSessionLaps(msgData *bus.ApiResponse) error {
 
 	fieldKey := fmt.Sprintf("spec.laps.%s.%s", simsessionNumber, custID)
 
-	err = firestore.Update("sessions", subsessionID, fieldKey, lapMapData)
+	err = firestore.Update(fc, "sessions", subsessionID, fieldKey, lapMapData)
 	if err != nil {
 		return fmt.Errorf("failed to update session results (%s/%s) in Firestore: %w", subsessionID, fieldKey, err)
 	}
