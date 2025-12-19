@@ -38,6 +38,10 @@ resource "google_project_service" "cloudrun" {
   service            = "run.googleapis.com"
   disable_on_destroy = false
 }
+resource "google_project_service" "firestore" {
+  service            = "firestore.googleapis.com"
+  disable_on_destroy = false
+}
 
 
 // PUB/SUB
