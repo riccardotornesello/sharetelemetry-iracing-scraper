@@ -169,7 +169,7 @@ resource "google_cloudfunctions2_function" "api" {
   service_config {
     max_instance_count               = 1
     min_instance_count               = 0
-    max_instance_request_concurrency = 20
+    max_instance_request_concurrency = 80
     available_memory                 = "256M"
     available_cpu                    = "1"
     timeout_seconds                  = 540
@@ -235,7 +235,7 @@ resource "google_cloudfunctions2_function" "responses" {
   service_config {
     max_instance_count               = 1
     min_instance_count               = 0
-    max_instance_request_concurrency = 20
+    max_instance_request_concurrency = 80
     available_memory                 = "256M"
     available_cpu                    = "1"
     timeout_seconds                  = 540
