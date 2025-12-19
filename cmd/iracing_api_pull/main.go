@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"io"
 	"log"
 	"os"
 
@@ -46,47 +45,9 @@ func main() {
 			return
 		}
 
-		res, err := iracing.CallApi(msgData.Endpoint, msgData.Params)
+		err = iracing.HandleApiRequest(ctx, pub, &msgData)
 		if err != nil {
-			// TODO: handle error response properly
-			log.Printf("API call failed: %v", err)
-			msg.Nack()
-			return
-		}
-		defer res.Body.Close()
-
-		log.Printf("API call to '%s' succeeded with status: %s", msgData.Endpoint, res.Status)
-
-		// Publish the response body to the response topic
-		bodyBytes, err := io.ReadAll(res.Body)
-		if err != nil {
-			log.Printf("Failed to read response body: %v", err)
-			msg.Nack()
-			return
-		}
-
-		apiResponse := bus.ApiResponse{
-			Endpoint: msgData.Endpoint,
-			Params:   msgData.Params,
-			Body:     string(bodyBytes),
-		}
-
-		data, err := json.Marshal(apiResponse)
-		if err != nil {
-			log.Printf("Failed to marshal response data: %v", err)
-			msg.Nack()
-			return
-		}
-
-		result := pub.Publish(ctx, &pubsub.Message{
-			Data: data,
-			Attributes: map[string]string{
-				"endpoint": msgData.Endpoint,
-			},
-		})
-		_, err = result.Get(ctx)
-		if err != nil {
-			log.Printf("Failed to publish response message: %v", err)
+			log.Printf("Failed to handle API request: %v", err)
 			msg.Nack()
 			return
 		}

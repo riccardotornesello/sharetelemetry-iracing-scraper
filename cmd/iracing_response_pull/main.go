@@ -45,34 +45,10 @@ func main() {
 			return
 		}
 
-		switch msgData.Endpoint {
-		case "/data/results/get":
-			err = processing.ProcessSessionResults(&msgData, ctx, pub)
-			if err != nil {
-				log.Printf("Failed to process session results: %v", err)
-				msg.Nack()
-				return
-			}
-
-		case "/data/results/lap_data":
-			err = processing.ProcessSessionLaps(&msgData)
-			if err != nil {
-				log.Printf("Failed to process session laps: %v", err)
-				msg.Nack()
-				return
-			}
-
-		case "/data/league/season_sessions":
-			err = processing.ProcessLeagueSeasonSessions(&msgData, ctx, pub)
-			if err != nil {
-				log.Printf("Failed to process league season sessions: %v", err)
-				msg.Nack()
-				return
-			}
-
-		default:
-			log.Printf("Skipping unknown endpoint: %s", msgData.Endpoint)
-			msg.Ack()
+		err = processing.MultiplexProcessing(ctx, pub, &msgData)
+		if err != nil {
+			log.Printf("Failed to process message: %v", err)
+			msg.Nack()
 			return
 		}
 

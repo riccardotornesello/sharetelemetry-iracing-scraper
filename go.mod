@@ -5,8 +5,11 @@ go 1.25.4
 require (
 	cloud.google.com/go/firestore v1.20.0
 	cloud.google.com/go/pubsub/v2 v2.3.0
+	github.com/GoogleCloudPlatform/functions-framework-go v1.9.2
+	github.com/cloudevents/sdk-go/v2 v2.15.2
 	github.com/joho/godotenv v1.5.1
 	github.com/riccardotornesello/irapi-go v0.4.2
+	google.golang.org/grpc v1.77.0
 )
 
 require (
@@ -25,7 +28,10 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.7 // indirect
 	github.com/googleapis/gax-go/v2 v2.15.0 // indirect
+	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/jszwec/csvutil v1.10.0 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
+	github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
@@ -34,6 +40,9 @@ require (
 	go.opentelemetry.io/otel v1.38.0 // indirect
 	go.opentelemetry.io/otel/metric v1.38.0 // indirect
 	go.opentelemetry.io/otel/trace v1.38.0 // indirect
+	go.uber.org/atomic v1.4.0 // indirect
+	go.uber.org/multierr v1.1.0 // indirect
+	go.uber.org/zap v1.10.0 // indirect
 	golang.org/x/crypto v0.45.0 // indirect
 	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/oauth2 v0.34.0 // indirect
@@ -45,6 +54,5 @@ require (
 	google.golang.org/genproto v0.0.0-20250922171735-9219d122eba9 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20251111163417-95abcf5c77ba // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251124214823-79d6a2a48846 // indirect
-	google.golang.org/grpc v1.77.0 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
 )
