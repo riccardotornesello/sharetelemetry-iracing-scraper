@@ -13,7 +13,7 @@ os.environ["PUBSUB_EMULATOR_HOST"] = "localhost:8085"
 DATA = {
     "api-req": [
         # {"endpoint": "/data/results/get", "params": {"subsession_id": "81891896", "include_licenses": "false"}},
-        {"endpoint": "/data/league/season_sessions", "params": {"league_id": "4403", "season_id": "0"}},
+        {"endpoint": "/data/league/season_sessions", "params": {"league_id": "4403", "season_id": "0", "results_only": "true"}},
     ]
 }
 
