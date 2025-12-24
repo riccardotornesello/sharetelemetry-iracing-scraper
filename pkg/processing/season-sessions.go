@@ -10,8 +10,8 @@ import (
 
 	"cloud.google.com/go/pubsub/v2"
 	"github.com/riccardotornesello/irapi-go/pkg/api/league/season_sessions"
-	"riccardotornesello.it/sharetelemetry/iracing/pkg/bus"
-	"riccardotornesello.it/sharetelemetry/iracing/pkg/database"
+	"github.com/riccardotornesello/sharetelemetry-iracing-scraper/pkg/bus"
+	"github.com/riccardotornesello/sharetelemetry-iracing-scraper/pkg/database"
 )
 
 type SeasonDoc struct {

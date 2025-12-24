@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/riccardotornesello/irapi-go/pkg/api/results/lap_data"
-	"riccardotornesello.it/sharetelemetry/iracing/pkg/bus"
-	"riccardotornesello.it/sharetelemetry/iracing/pkg/database"
+	"github.com/riccardotornesello/sharetelemetry-iracing-scraper/pkg/bus"
+	"github.com/riccardotornesello/sharetelemetry-iracing-scraper/pkg/database"
 )
 
 type LapsDoc struct {

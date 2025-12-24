@@ -1,4 +1,4 @@
-module riccardotornesello.it/sharetelemetry/iracing
+module github.com/riccardotornesello/sharetelemetry-iracing-scraper
 
 go 1.25.4
 

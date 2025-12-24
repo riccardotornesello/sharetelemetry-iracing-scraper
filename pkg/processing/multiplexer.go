@@ -6,8 +6,8 @@ import (
 	"log"
 
 	"cloud.google.com/go/pubsub/v2"
-	"riccardotornesello.it/sharetelemetry/iracing/pkg/bus"
-	"riccardotornesello.it/sharetelemetry/iracing/pkg/database"
+	"github.com/riccardotornesello/sharetelemetry-iracing-scraper/pkg/bus"
+	"github.com/riccardotornesello/sharetelemetry-iracing-scraper/pkg/database"
 )
 
 func MultiplexProcessing(db *database.DB, ctx context.Context, pub *pubsub.Publisher, msgData *bus.ApiResponse) error {

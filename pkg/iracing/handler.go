@@ -11,7 +11,7 @@ import (
 	"cloud.google.com/go/pubsub/v2"
 	"github.com/riccardotornesello/irapi-go"
 	"github.com/riccardotornesello/irapi-go/pkg/client"
-	"riccardotornesello.it/sharetelemetry/iracing/pkg/bus"
+	"github.com/riccardotornesello/sharetelemetry-iracing-scraper/pkg/bus"
 )
 
 func HandleApiRequest(ctx context.Context, iracingClient *irapi.IRacingApiClient, pub *pubsub.Publisher, msgData *bus.ApiRequest) error {

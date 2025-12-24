@@ -10,8 +10,8 @@ import (
 	"github.com/riccardotornesello/irapi-go"
 
 	"cloud.google.com/go/pubsub/v2"
-	"riccardotornesello.it/sharetelemetry/iracing/pkg/bus"
-	"riccardotornesello.it/sharetelemetry/iracing/pkg/iracing"
+	"github.com/riccardotornesello/sharetelemetry-iracing-scraper/pkg/bus"
+	"github.com/riccardotornesello/sharetelemetry-iracing-scraper/pkg/iracing"
 )
 
 const (

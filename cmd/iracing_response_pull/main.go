@@ -9,9 +9,9 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 
 	"cloud.google.com/go/pubsub/v2"
-	"riccardotornesello.it/sharetelemetry/iracing/pkg/bus"
-	"riccardotornesello.it/sharetelemetry/iracing/pkg/database"
-	"riccardotornesello.it/sharetelemetry/iracing/pkg/processing"
+	"github.com/riccardotornesello/sharetelemetry-iracing-scraper/pkg/bus"
+	"github.com/riccardotornesello/sharetelemetry-iracing-scraper/pkg/database"
+	"github.com/riccardotornesello/sharetelemetry-iracing-scraper/pkg/processing"
 )
 
 const (

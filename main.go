@@ -10,10 +10,10 @@ import (
 	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
 	"github.com/cloudevents/sdk-go/v2/event"
 	"github.com/riccardotornesello/irapi-go"
-	"riccardotornesello.it/sharetelemetry/iracing/pkg/bus"
-	"riccardotornesello.it/sharetelemetry/iracing/pkg/database"
-	"riccardotornesello.it/sharetelemetry/iracing/pkg/iracing"
-	"riccardotornesello.it/sharetelemetry/iracing/pkg/processing"
+	"github.com/riccardotornesello/sharetelemetry-iracing-scraper/pkg/bus"
+	"github.com/riccardotornesello/sharetelemetry-iracing-scraper/pkg/database"
+	"github.com/riccardotornesello/sharetelemetry-iracing-scraper/pkg/iracing"
+	"github.com/riccardotornesello/sharetelemetry-iracing-scraper/pkg/processing"
 )
 
 type MessagePublishedData struct {
