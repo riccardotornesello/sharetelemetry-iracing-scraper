@@ -31,7 +31,6 @@ var (
 	dbUri  = os.Getenv("MONGODB_URI")
 	dbName = os.Getenv("MONGODB_DATABASE")
 
-	ctx           = context.Background()
 	pubSubClient  *pubsub.Client
 	iracingClient *irapi.IRacingApiClient
 	db            *database.DB
