@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 
 	"cloud.google.com/go/pubsub/v2"
@@ -12,7 +11,7 @@ import (
 	"github.com/cloudevents/sdk-go/v2/event"
 	"github.com/riccardotornesello/irapi-go"
 	"riccardotornesello.it/sharetelemetry/iracing/pkg/bus"
-	"riccardotornesello.it/sharetelemetry/iracing/pkg/firestore"
+	"riccardotornesello.it/sharetelemetry/iracing/pkg/database"
 	"riccardotornesello.it/sharetelemetry/iracing/pkg/iracing"
 	"riccardotornesello.it/sharetelemetry/iracing/pkg/processing"
 )
@@ -29,10 +28,13 @@ var (
 	apiRequestTopicID  = os.Getenv("API_REQUEST_TOPIC_ID")
 	apiResponseTopicID = os.Getenv("API_RESPONSE_TOPIC_ID")
 
+	dbUri  = os.Getenv("MONGODB_URI")
+	dbName = os.Getenv("MONGODB_DATABASE")
+
 	ctx           = context.Background()
 	pubSubClient  *pubsub.Client
 	iracingClient *irapi.IRacingApiClient
-	fc            *firestore.FirestoreClient
+	db            *database.DB
 )
 
 func init() {
@@ -55,11 +57,8 @@ func init() {
 		panic(fmt.Sprintf("Error initializing iRacing client: %v", err))
 	}
 
-	// Connect to Firestore
-	fc, err = firestore.Init(ctx, projectID)
-	if err != nil {
-		log.Fatalf("Failed to initialize Firestore client: %v", err)
-	}
+	// Connect to the database
+	db = database.Connect(dbUri, dbName)
 
 	// Register Cloud Functions
 	functions.CloudEvent("ApiPull", apiPull)
@@ -97,5 +96,5 @@ func responsePull(ctx context.Context, e event.Event) error {
 
 	pub := pubSubClient.Publisher(apiRequestTopicID)
 
-	return processing.MultiplexProcessing(fc, ctx, pub, &msgData)
+	return processing.MultiplexProcessing(db, ctx, pub, &msgData)
 }

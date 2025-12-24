@@ -5,44 +5,100 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"time"
 
 	"cloud.google.com/go/pubsub/v2"
 	"github.com/riccardotornesello/irapi-go/pkg/api/results/get"
 	"riccardotornesello.it/sharetelemetry/iracing/pkg/bus"
-	"riccardotornesello.it/sharetelemetry/iracing/pkg/firestore"
+	"riccardotornesello.it/sharetelemetry/iracing/pkg/database"
 )
 
-func ProcessSessionResults(fc *firestore.FirestoreClient, msgData *bus.ApiResponse, ctx context.Context, pub *pubsub.Publisher) error {
+type SessionDoc struct {
+	Meta database.Meta `bson:"meta,omitempty"`
+	Spec SessionSpec   `bson:"spec,omitempty"`
+}
+
+type SessionSpec struct {
+	Data map[string]interface{} `bson:"data,omitempty"`
+}
+
+func generateSessionDocumentName(subsessionID int64) string {
+	return fmt.Sprintf("session_%d", subsessionID)
+}
+
+func getOrCreateSessionDocument(db *database.DB, subsessionID int64) (*SessionDoc, error) {
+	var session SessionDoc
+
+	document_name := generateSessionDocumentName(subsessionID)
+
+	err := db.GetOne(SessionCollection, SessionKind, document_name, &session)
+	if err != nil {
+		if err == database.ErrNotFound {
+			session = SessionDoc{
+				Meta: database.Meta{
+					Version:   0,
+					CreatedAt: time.Now().UTC(),
+
+					Kind:   SessionKind,
+					Name:   document_name,
+					Labels: map[string]interface{}{},
+				},
+				Spec: SessionSpec{},
+			}
+
+			err = db.Create(SessionCollection, &session)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
+	}
+
+	return &session, nil
+}
+
+func saveSessionDocument(db *database.DB, session *SessionDoc) error {
+	session.Meta.Version += 1
+	return db.Update(SessionCollection, SessionKind, session.Meta.Name, session.Meta.Version-1, session)
+}
+
+func processSessionResults(db *database.DB, msgData *bus.ApiResponse, ctx context.Context, pub *pubsub.Publisher) error {
 	var err error
 
 	body := []byte(msgData.Body)
 
 	// Convert to the IRacing's API response
-	var session get.ResultsGetResponse
-	err = json.Unmarshal(body, &session)
+	var iRacingSession get.ResultsGetResponse
+	err = json.Unmarshal(body, &iRacingSession)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal API response body: %w", err)
 	}
 
-	// Convert to a map for Firestore
-	// NOTE: this is needed to keep the key names as in the original response
-	var sessionMapData map[string]interface{}
-	err = json.Unmarshal(body, &sessionMapData)
+	subsessionID := iRacingSession.SubsessionID
+	log.Printf("Processing results for subsession ID: %d", subsessionID)
+
+	// Get the session from the database
+	session, err := getOrCreateSessionDocument(db, subsessionID)
+	if err != nil {
+		return fmt.Errorf("failed to get or create session document: %w", err)
+	}
+
+	// Update the session document data and labels
+	session.Meta.Labels["league_id"] = iRacingSession.LeagueID
+	session.Meta.Labels["season_id"] = iRacingSession.SeasonID
+	session.Meta.Labels["subsession_id"] = iRacingSession.SubsessionID
+	session.Meta.Labels["track_id"] = iRacingSession.Track.TrackID
+
+	err = json.Unmarshal(body, &session.Spec.Data)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal API response body to map: %w", err)
 	}
 
-	subsessionID := session.SubsessionID
-	log.Printf("Processing results for subsession ID: %d", subsessionID)
-
-	// Save to firestore
-	err = firestore.UpsertData(fc, "sessions", fmt.Sprintf("%d", subsessionID), map[string]interface{}{
-		"spec": map[string]interface{}{
-			"session": sessionMapData,
-		},
-	})
+	// Save to the database
+	err = saveSessionDocument(db, session)
 	if err != nil {
-		return fmt.Errorf("failed to upsert session results to Firestore: %w", err)
+		return fmt.Errorf("failed to save session document: %w", err)
 	}
 
 	log.Printf("Successfully saved results for subsession ID: %d", subsessionID)
@@ -51,7 +107,7 @@ func ProcessSessionResults(fc *firestore.FirestoreClient, msgData *bus.ApiRespon
 	var pubsubRequests [][]byte
 	var pubsubResults []*pubsub.PublishResult
 
-	for _, simsession := range session.SessionResults {
+	for _, simsession := range iRacingSession.SessionResults {
 		for _, simsessionResult := range simsession.Results {
 			apiRequest := bus.ApiRequest{
 				Endpoint: "/data/results/lap_data",
@@ -89,5 +145,6 @@ func ProcessSessionResults(fc *firestore.FirestoreClient, msgData *bus.ApiRespon
 	}
 
 	log.Printf("Published %d lap data requests for subsession ID: %d", len(pubsubRequests), subsessionID)
+
 	return nil
 }

@@ -12,6 +12,19 @@ variable "project_id" {
 }
 
 
+// DATABASE
+
+variable "database_url" {
+  description = "The url for the database."
+  type        = string
+}
+
+variable "database_name" {
+  description = "The name of the database."
+  type        = string
+}
+
+
 // IRACING
 
 variable "iracing_client_id" {

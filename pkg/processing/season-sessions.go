@@ -5,37 +5,86 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"cloud.google.com/go/pubsub/v2"
 	"github.com/riccardotornesello/irapi-go/pkg/api/league/season_sessions"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"riccardotornesello.it/sharetelemetry/iracing/pkg/bus"
-	"riccardotornesello.it/sharetelemetry/iracing/pkg/firestore"
+	"riccardotornesello.it/sharetelemetry/iracing/pkg/database"
 )
 
-type League struct {
-	Seasons map[string]LeagueSeason `firestore:"seasons"`
+type SeasonDoc struct {
+	Meta   database.Meta `bson:"meta,omitempty"`
+	Status SeasonStatus  `bson:"status,omitempty"`
 }
 
-type LeagueSeason struct {
-	SessionsParsed map[string]LeagueSeasonSession `firestore:"sessions_parsed"`
+type SeasonStatus struct {
+	ParsedSessions map[string]SeasonStatusSession `bson:"parsed_sessions,omitempty"`
 }
 
-type LeagueSeasonSession struct {
-	EntryCount int64     `firestore:"entry_count"` // TODO: fix always zero, should be filled from the API
-	LaunchAt   time.Time `firestore:"launch_at"`
-	TrackID    int64     `firestore:"track_id"`
+type SeasonStatusSession struct {
+	LaunchAt *time.Time `bson:"launch_at,omitempty"`
+	TrackID  *int64     `bson:"track_id,omitempty"`
 }
 
-func ProcessLeagueSeasonSessions(fc *firestore.FirestoreClient, msgData *bus.ApiResponse, ctx context.Context, pub *pubsub.Publisher) error {
+func generateSeasonDocumentName(leagueID int64, seasonID int64) string {
+	return fmt.Sprintf("league_%d_season_%d", leagueID, seasonID)
+}
+
+func getOrCreateSeasonDocument(db *database.DB, leagueID int64, seasonID int64) (*SeasonDoc, error) {
+	var season SeasonDoc
+
+	document_name := generateSeasonDocumentName(leagueID, seasonID)
+
+	err := db.GetOne(SeasonCollection, SeasonKind, document_name, &season)
+	if err != nil {
+		if err == database.ErrNotFound {
+			season = SeasonDoc{
+				Meta: database.Meta{
+					Version:   0,
+					CreatedAt: time.Now().UTC(),
+
+					Kind:   SeasonKind,
+					Name:   document_name,
+					Labels: map[string]interface{}{},
+				},
+				Status: SeasonStatus{
+					ParsedSessions: make(map[string]SeasonStatusSession),
+				},
+			}
+
+			err = db.Create(SeasonCollection, &season)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
+	}
+
+	return &season, nil
+}
+
+func saveSeasonDocument(db *database.DB, season *SeasonDoc) error {
+	season.Meta.Version += 1
+	return db.Update(SeasonCollection, SeasonKind, season.Meta.Name, season.Meta.Version-1, season)
+}
+
+func processLeagueSeasonSessions(db *database.DB, msgData *bus.ApiResponse, ctx context.Context, pub *pubsub.Publisher) error {
 	var err error
 
 	body := []byte(msgData.Body)
 
-	leagueID := msgData.Params["league_id"]
-	seasonID := msgData.Params["season_id"]
+	leagueID, err := strconv.ParseInt(msgData.Params["league_id"], 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid league_id parameter: %w", err)
+	}
+
+	seasonID, err := strconv.ParseInt(msgData.Params["season_id"], 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid season_id parameter: %w", err)
+	}
 
 	// Convert to the IRacing's API response
 	var iracingSeasonSessions season_sessions.LeagueSeasonSessionsResponse
@@ -44,25 +93,15 @@ func ProcessLeagueSeasonSessions(fc *firestore.FirestoreClient, msgData *bus.Api
 		return fmt.Errorf("failed to unmarshal API response body: %w", err)
 	}
 
-	// Get the league in Firestore
-	league, err := firestore.Get[League](fc, "leagues", leagueID)
+	// Get the season from the database
+	season, err := getOrCreateSeasonDocument(db, leagueID, seasonID)
 	if err != nil {
-		if status.Code(err) != codes.NotFound {
-			return fmt.Errorf("failed to get league from Firestore: %w", err)
-		} else {
-			league = &League{}
-		}
-	}
-	if league.Seasons == nil {
-		league.Seasons = make(map[string]LeagueSeason)
-	}
-	if _, ok := league.Seasons[seasonID]; !ok {
-		league.Seasons[seasonID] = LeagueSeason{}
+		return fmt.Errorf("failed to get or create season document: %w", err)
 	}
 
 	// Find the missing subsessions
 	alreadyParsedSubsessions := make(map[string]interface{})
-	for parsedSubsessionID, _ := range league.Seasons[seasonID].SessionsParsed {
+	for parsedSubsessionID, _ := range season.Status.ParsedSessions {
 		alreadyParsedSubsessions[parsedSubsessionID] = nil
 	}
 
@@ -112,24 +151,23 @@ func ProcessLeagueSeasonSessions(fc *firestore.FirestoreClient, msgData *bus.Api
 
 	// Update the league season with the newly parsed sessions
 	// Convert the sessions to a map for easier storage
-	newSessionsParsed := make(map[string]LeagueSeasonSession)
+	season.Status.ParsedSessions = make(map[string]SeasonStatusSession)
 	for _, iracingSession := range iracingSeasonSessions.Sessions {
-		newSessionsParsed[fmt.Sprintf("%d", iracingSession.SubsessionID)] = LeagueSeasonSession{
-			EntryCount: iracingSession.EntryCount,
-			LaunchAt:   iracingSession.LaunchAt.Time,
-			TrackID:    iracingSession.Track.TrackID,
+		season.Status.ParsedSessions[fmt.Sprintf("%d", iracingSession.SubsessionID)] = SeasonStatusSession{
+			LaunchAt: &iracingSession.LaunchAt.Time,
+			TrackID:  &iracingSession.Track.TrackID,
 		}
 	}
 
-	season := league.Seasons[seasonID]
-	season.SessionsParsed = newSessionsParsed
-	league.Seasons[seasonID] = season
+	// Update the labels
+	season.Meta.Labels["league_id"] = leagueID
+	season.Meta.Labels["season_id"] = seasonID
 
-	err = firestore.Set(fc, "leagues", leagueID, league)
+	err = saveSeasonDocument(db, season)
 	if err != nil {
-		return fmt.Errorf("failed to update league in Firestore: %w", err)
+		return fmt.Errorf("failed to update season document: %w", err)
 	}
 
-	log.Printf("Published %d sessions requests for league ID: %s", len(pubsubRequests), leagueID)
+	log.Printf("Published %d sessions requests for league ID: %d", len(pubsubRequests), leagueID)
 	return nil
 }

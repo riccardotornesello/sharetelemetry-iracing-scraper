@@ -8,13 +8,18 @@ provider "google" {
 locals {
   environment_variables = merge(
     {
-      "PROJECT_ID"            = var.project_id
+      "PROJECT_ID" = var.project_id
+
       "API_REQUEST_TOPIC_ID"  = google_pubsub_topic.iracing_api_topic.id
       "API_RESPONSE_TOPIC_ID" = google_pubsub_topic.iracing_response_topic.id
+
       "IRACING_CLIENT_ID"     = var.iracing_client_id
       "IRACING_CLIENT_SECRET" = var.iracing_client_secret
       "IRACING_USERNAME"      = var.iracing_username
       "IRACING_PASSWORD"      = var.iracing_password
+
+      "MONGODB_URI"      = var.database_url
+      "MONGODB_DATABASE" = var.database_name
     },
   )
 }
@@ -36,10 +41,6 @@ resource "google_project_service" "eventarc" {
 }
 resource "google_project_service" "cloudrun" {
   service            = "run.googleapis.com"
-  disable_on_destroy = false
-}
-resource "google_project_service" "firestore" {
-  service            = "firestore.googleapis.com"
   disable_on_destroy = false
 }
 
@@ -123,12 +124,6 @@ resource "google_project_iam_member" "builder_storage_object_admin" {
 resource "google_project_iam_member" "runner_pubsub_publisher" {
   project = google_service_account.runner.project
   role    = "roles/pubsub.publisher"
-  member  = "serviceAccount:${google_service_account.runner.email}"
-}
-
-resource "google_project_iam_member" "runner_firestore_writer" {
-  project = google_service_account.runner.project
-  role    = "roles/datastore.user"
   member  = "serviceAccount:${google_service_account.runner.email}"
 }
 
@@ -268,10 +263,4 @@ resource "google_cloud_run_service_iam_member" "invoker_responses" {
   service  = google_cloudfunctions2_function.responses.name
   role     = "roles/run.invoker"
   member   = "serviceAccount:${google_service_account.invoker.email}"
-}
-
-resource "google_firestore_database" "database" {
-  name                    = "(default)"
-  location_id             = var.region
-  type                    = "FIRESTORE_NATIVE"
 }

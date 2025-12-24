@@ -10,7 +10,7 @@ import (
 
 	"cloud.google.com/go/pubsub/v2"
 	"riccardotornesello.it/sharetelemetry/iracing/pkg/bus"
-	"riccardotornesello.it/sharetelemetry/iracing/pkg/firestore"
+	"riccardotornesello.it/sharetelemetry/iracing/pkg/database"
 	"riccardotornesello.it/sharetelemetry/iracing/pkg/processing"
 )
 
@@ -24,6 +24,9 @@ func main() {
 
 	projectID := os.Getenv("PROJECT_ID")
 
+	dbUri := os.Getenv("MONGODB_URI")
+	dbName := os.Getenv("MONGODB_DATABASE")
+
 	// Create a Pub/Sub client
 	pubSubClient, err := pubsub.NewClient(ctx, projectID)
 	if err != nil {
@@ -35,11 +38,8 @@ func main() {
 	sub := pubSubClient.Subscriber(responseSubscriptionID)
 	pub := pubSubClient.Publisher(requestTopicID)
 
-	// Connect to Firestore
-	fc, err := firestore.Init(ctx, projectID)
-	if err != nil {
-		log.Fatalf("Failed to initialize Firestore client: %v", err)
-	}
+	// Connect to the database
+	db := database.Connect(dbUri, dbName)
 
 	// Parse messages
 	log.Println("Listening for messages...")
@@ -52,7 +52,7 @@ func main() {
 			return
 		}
 
-		err = processing.MultiplexProcessing(fc, ctx, pub, &msgData)
+		err = processing.MultiplexProcessing(db, ctx, pub, &msgData)
 		if err != nil {
 			log.Printf("Failed to process message: %v", err)
 			msg.Nack()
