@@ -269,3 +269,10 @@ resource "google_cloud_run_service_iam_member" "invoker_responses" {
   role     = "roles/run.invoker"
   member   = "serviceAccount:${google_service_account.invoker.email}"
 }
+
+resource "google_firestore_database" "database" {
+  name                    = "(default)"
+  location_id             = var.region
+  type                    = "FIRESTORE_NATIVE"
+  delete_protection_state = "DELETE_PROTECTION_ENABLED"
+}
