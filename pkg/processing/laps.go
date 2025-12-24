@@ -13,6 +13,7 @@ func ProcessSessionLaps(fc *firestore.FirestoreClient, msgData *bus.ApiResponse)
 	var err error
 
 	body := []byte(msgData.Body)
+	chunks := []byte(*msgData.Chunks)
 
 	// Convert to a map for Firestore
 	// NOTE: this is needed to keep the key names as in the original response
@@ -21,6 +22,14 @@ func ProcessSessionLaps(fc *firestore.FirestoreClient, msgData *bus.ApiResponse)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal API response body to map: %w", err)
 	}
+
+	var chunksMapData []map[string]interface{}
+	err = json.Unmarshal(chunks, &chunksMapData)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal API response body to chunks map: %w", err)
+	}
+
+	lapMapData["chunks"] = chunksMapData
 
 	// Save to firestore
 	subsessionID := msgData.Params["subsession_id"]
