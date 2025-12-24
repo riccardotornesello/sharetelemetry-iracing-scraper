@@ -8,7 +8,7 @@ require (
 	github.com/GoogleCloudPlatform/functions-framework-go v1.9.2
 	github.com/cloudevents/sdk-go/v2 v2.15.2
 	github.com/joho/godotenv v1.5.1
-	github.com/riccardotornesello/irapi-go v0.4.2
+	github.com/riccardotornesello/irapi-go v0.4.3
 	google.golang.org/grpc v1.77.0
 )
 
@@ -28,6 +28,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.7 // indirect
 	github.com/googleapis/gax-go/v2 v2.15.0 // indirect
+	github.com/gorilla/schema v1.4.1 // indirect
 	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/jszwec/csvutil v1.10.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect

@@ -60,6 +60,7 @@ func ProcessSessionResults(fc *firestore.FirestoreClient, msgData *bus.ApiRespon
 					"simsession_number": fmt.Sprintf("%d", simsession.SimsessionNumber),
 					"cust_id":           fmt.Sprintf("%d", simsessionResult.CustID),
 				},
+				Chunks: true,
 			}
 
 			data, err := json.Marshal(apiRequest)

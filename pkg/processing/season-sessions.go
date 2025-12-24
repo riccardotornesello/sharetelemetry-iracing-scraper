@@ -24,7 +24,7 @@ type LeagueSeason struct {
 }
 
 type LeagueSeasonSession struct {
-	EntryCount int64     `firestore:"entry_count"`
+	EntryCount int64     `firestore:"entry_count"` // TODO: fix always zero, should be filled from the API
 	LaunchAt   time.Time `firestore:"launch_at"`
 	TrackID    int64     `firestore:"track_id"`
 }
